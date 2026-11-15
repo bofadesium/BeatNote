@@ -43,7 +43,7 @@ Emergency departments are overwhelmed. ECG interpretation and documentation dela
 *(Optional)* NIH Chest X-ray — for multi-modal reasoning extension
 ## 🤝 Sponsor Alignment: Abridge
 
-Inspired by Abridge’s mission to give clinicians time back. QRScribe doesn’t just flag risk—it **writes the documentation**. The Nemotron-generated impression mirrors Abridge-style clinical summarization, reducing administrative burden so clinicians can focus on patients.
+Inspired by Abridge’s mission to give clinicians time back. BeatNote doesn’t just flag risk—it **writes the documentation**. The Nemotron-generated impression mirrors Abridge-style clinical summarization, reducing administrative burden so clinicians can focus on patients.
 
 ## ✅ Track 02 Qualification
 
@@ -57,7 +57,7 @@ Inspired by Abridge’s mission to give clinicians time back. QRScribe doesn’t
 ```bash
 # Clone
 git clone https://github.com/bofadesium/BeatNote.git
-cd qrscribe
+cd BeatNote
 
 # Backend
 pip install -r requirements.txt
