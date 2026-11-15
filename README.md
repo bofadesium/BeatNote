@@ -56,7 +56,7 @@ Inspired by Abridge’s mission to give clinicians time back. QRScribe doesn’t
 
 ```bash
 # Clone
-git clone https://github.com/bofadesium/.git
+git clone https://github.com/bofadesium/BeatNote.git
 cd qrscribe
 
 # Backend
