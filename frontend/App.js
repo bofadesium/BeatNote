@@ -7,6 +7,7 @@ import AlertBanner from './src/components/AlertBanner';
 import MetricsTable from './src/components/MetricsTable';
 import StatusLegend from './src/components/StatusLegend';
 import ImpactCard from './src/components/ImpactCard';
+import ImportPanel from './src/components/ImportPanel';
 import { CASES } from './src/lib/cases';
 import { fuseRisk } from './src/lib/triage';
 import { abnormalRegions } from './src/lib/regions';
@@ -116,6 +117,9 @@ export default function App() {
                 </Pressable>
               </View>
             )}
+
+            <Text style={styles.label}>5 · Import a cohort (CSV / parquet)</Text>
+            <ImportPanel />
           </>
         )}
         <ImpactCard />

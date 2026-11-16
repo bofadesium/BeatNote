@@ -29,7 +29,21 @@ precision/recall at the 0.30 and 0.60 cut-offs: use those to set `ADMIT_YELLOW` 
 Copy the file to `backend/models/` (gitignored) or set `BEATNOTE_MODEL_PATH`. Without it, `/assess` still returns the
 traffic-light statuses but no admission risk. `joblib` loads pickles: only load a file you trained yourself.
 
+## Batch scoring an uploaded file
+`POST /batch` takes one `file` (multipart) that is either `.csv` or `.parquet` and scores every row with the
+admission model. Headers are matched through `batch.py`'s `ALIASES` (`esi`, `age`/`patient_age`, `sex`/`gender`,
+`arrival`, `hr`/`heart_rate`, `sbp`, `spo2`, ...), so a raw export works without renaming; absent vital
+columns are scored empty, and an unmappable file returns 400 naming the columns found. The file is parsed in
+memory and not stored. Without a trained model the endpoint returns 503.
+
+```bash
+curl -F file=@cohort.csv localhost:8010/batch
+```
+
+Requires `python-multipart` and `pyarrow` (both in `requirements.txt`). The demo's section 5 "Import a cohort"
+panel uses this endpoint and needs `EXPO_PUBLIC_API_URL` pointing at the API.
+
 ## Endpoints
-`POST /assess` (statuses + admission risk + notify level) · `POST /alerts` · `GET /alerts` · `POST /alerts/{id}/ack` · `POST /note` · `GET /health`
+`POST /assess` (statuses + admission risk + notify level) · `POST /batch` (score an uploaded CSV/parquet) · `POST /alerts` · `GET /alerts` · `POST /alerts/{id}/ack` · `POST /note` · `GET /health`
 
 All thresholds (`assess.py`) are demo values, not clinically validated. See `../docs/ARCHITECTURE.md` for storage and scaling.

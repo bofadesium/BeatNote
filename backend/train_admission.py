@@ -21,12 +21,9 @@ import sys
 
 import pandas as pd
 
-FEATURES = [
-    "esi", "age", "gender", "arrivalmode",
-    "n_edvisits", "n_admissions", "n_surgeries",
-    "triage_vital_hr", "triage_vital_sbp", "triage_vital_dbp", "triage_vital_rr",
-    "triage_vital_o2", "triage_vital_o2_device", "triage_vital_temp",
-]
+from assess import MODEL_COLUMNS
+
+FEATURES = MODEL_COLUMNS
 CATEGORICAL = ("gender", "arrivalmode")
 IDENTIFIERS = ("esi", "age", "gender", "arrivalmode")  # fatal if absent: no useful substitute
 TARGET_CANDIDATES = ("admitted", "admission", "hospital_admission", "disposition_admitted")

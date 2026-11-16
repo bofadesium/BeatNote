@@ -10,7 +10,8 @@ from typing import Literal
 import httpx
 import alerts
 import assess as assess_mod
-from fastapi import FastAPI, HTTPException
+import batch as batch_mod
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -160,6 +161,25 @@ async def create_note(req: NoteRequest):
 def assess_case(req: AssessRequest):
     """Traffic-light statuses for every measurement + Yale admission risk + notification level."""
     return assess_mod.assess(req.patient, req.triage, req.vitals, req.ecg)
+
+
+MAX_UPLOAD_BYTES = 25 * 1024 * 1024
+
+
+@app.post("/batch")
+async def score_batch(file: UploadFile = File(...)):
+    """Scores every row of an uploaded CSV or parquet cohort with the admission model."""
+    raw = await file.read()
+    if not raw:
+        raise HTTPException(400, "The uploaded file is empty.")
+    if len(raw) > MAX_UPLOAD_BYTES:
+        raise HTTPException(413, "File too large: upload 25 MB or less.")
+    try:
+        return batch_mod.score_file(file.filename, raw)
+    except batch_mod.BadFile as e:
+        raise HTTPException(400, str(e))
+    except batch_mod.ModelMissing as e:
+        raise HTTPException(503, str(e))
 
 
 @app.post("/alerts")

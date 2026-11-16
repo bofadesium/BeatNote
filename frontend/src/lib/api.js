@@ -33,6 +33,23 @@ export async function sendAlert(caseId, level, reasons) {
   return post('/alerts', { case_id: caseId, level, reasons });
 }
 
+export async function scoreBatch(file) {
+  if (!hasBackend) throw new Error('Uploads need the API running (set EXPO_PUBLIC_API_URL).');
+  const form = new FormData();
+  form.append('file', file, file.name);
+  let res;
+  try {
+    res = await fetch(`${API}/batch`, { method: 'POST', body: form });
+  } catch {
+    throw new Error(`Can't reach the backend at ${API}. Is it running?`);
+  }
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body && body.detail ? body.detail : `Backend error ${res.status}`);
+  }
+  return res.json();
+}
+
 export async function generateNote(payload) {
   if (hasBackend) return post('/note', payload); // { note, source }
   await new Promise((r) => setTimeout(r, 900));
