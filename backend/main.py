@@ -8,6 +8,8 @@ import os
 from typing import Literal
 
 import httpx
+import alerts
+import assess as assess_mod
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -45,6 +47,37 @@ class NoteRequest(BaseModel):
     patient: Patient
     features: Features
     risk: Risk
+    flags: list[str] = []  # abnormal findings that triggered clinician notification
+
+
+class Triage(BaseModel):
+    esi: int | None = Field(None, ge=1, le=5)
+    n_edvisits: int = Field(0, ge=0)
+    n_admissions: int = Field(0, ge=0)
+    n_surgeries: int = Field(0, ge=0)
+
+
+class Vitals(BaseModel):
+    sbp: float | None = Field(None, ge=20, le=320)
+    dbp: float | None = Field(None, ge=10, le=220)
+    rr: float | None = Field(None, ge=4, le=70)
+    o2: float | None = Field(None, ge=50, le=100)
+    o2_device: int = Field(0, ge=0, le=1)
+    temp: float | None = Field(None, ge=85, le=110)
+
+
+class AssessRequest(BaseModel):
+    case_id: str = Field(max_length=64)
+    patient: Patient
+    triage: Triage = Triage()
+    vitals: Vitals = Vitals()
+    ecg: Features
+
+
+class AlertRequest(BaseModel):
+    case_id: str = Field(max_length=64)
+    level: Literal["urgent", "review"]
+    reasons: list[str] = Field(max_length=20)
 
 
 class NoteResponse(BaseModel):
@@ -67,7 +100,8 @@ def template_note(r: NoteRequest) -> str:
     return "\n".join([
         f"S: {p.age}y {p.sex} presenting via {p.arrival.lower()}{cp}.",
         f"O: HR {f.hr} bpm, {f.rhythm.lower()}. RMSSD {f.rmssd} ms. ST deviation {f.stDeviation} mV. QT {f.qtMs} ms.",
-        f"A: Fused ECG + ED risk score {k.score}/100 ({k.level}).",
+        f"A: ED admission-risk score {k.score}/100; overall triage status {k.level}."
+        + (f" Flagged for clinician: {'; '.join(r.flags)}." if r.flags else ""),
         f"P: {ACTIONS[k.level]}",
         "",
         DISCLAIMER,
@@ -119,3 +153,28 @@ async def create_note(req: NoteRequest):
         # Never leave the clinician without a note; fall back and say so in logs.
         print(f"Nemotron call failed ({type(e).__name__}); using template")
         return NoteResponse(note=template_note(req), source="template")
+
+
+@app.post("/assess")
+def assess_case(req: AssessRequest):
+    """Traffic-light statuses for every measurement + Yale admission risk + notification level."""
+    return assess_mod.assess(req.patient, req.triage, req.vitals, req.ecg)
+
+
+@app.post("/alerts")
+def create_alert(req: AlertRequest):
+    """Record a clinician notification (idempotent per case within 10 minutes)."""
+    return alerts.create_alert(req.case_id, req.level, req.reasons)
+
+
+@app.get("/alerts")
+def get_alerts(limit: int = 50):
+    return alerts.list_alerts(min(max(limit, 1), 200))
+
+
+@app.post("/alerts/{alert_id}/ack")
+def acknowledge_alert(alert_id: int):
+    a = alerts.ack_alert(alert_id)
+    if a is None:
+        raise HTTPException(404, "alert not found")
+    return a
