@@ -29,8 +29,26 @@ Emergency departments are overwhelmed. ECG interpretation and documentation dela
 4. **Click “Generate Note”** → Nemotron drafts a triage impression and recommended action.  
 5. **Copy** the auto-drafted note to the EHR (simulated).
 
-**Live Demo:** [Insert hosted Streamlit / Render / HF Spaces URL here]  
+**Live Demo:** deploy with the steps under [Hosted live demo](#-hosted-live-demo) (one public URL, no local setup for viewers)  
 **Backup Video:** [Insert link if Wi-Fi fails]
+
+## 🌍 Hosted live demo
+
+`deploy/Dockerfile` builds one container that serves the Expo web app and the FastAPI backend on the
+same origin (app at `/`, API at `/api`), so there is no CORS or API-URL configuration to do.
+
+```bash
+docker build -f deploy/Dockerfile -t beatnote-demo .
+docker run -p 3000:8000 beatnote-demo   # http://localhost:3000
+```
+
+**Render (free, one click):** push this repo, then in Render choose **New → Blueprint** and point it at
+the repository — `render.yaml` provisions a Docker web service with `/api/health` as the health check.
+Set `NVIDIA_API_KEY` in the service's environment to get real Nemotron notes; without it the API returns
+the built-in template note.
+
+Notes: the container listens on `$PORT` (default 8000). Render's free plan has an ephemeral disk, so the
+SQLite alert log resets on redeploy, and the instance sleeps after inactivity (~50 s cold start).
 
 ## 🧱 Architecture & Stack
 
