@@ -10,7 +10,7 @@ export function localAssess({ features: f, vitals: v }) {
     m.push({ key, label, value, unit, status, normal, reason: status === 'green' ? null : reason });
   add('hr', 'Heart rate', f.hr, 'bpm', band(f.hr, BANDS.hr), '60-100', 'Outside 60-100 bpm');
   const rs = { 'Sinus rhythm': 'green', Tachycardia: 'yellow', Bradycardia: 'yellow' }[f.rhythm] || 'red';
-  add('rhythm', 'Rhythm', f.rhythm, '', rs, 'Sinus rhythm', `Rhythm: ${f.rhythm}`);
+  add('rhythm', 'Rhythm', f.rhythm, '', rs, 'Sinus rhythm', f.rhythm);
   const st = Math.abs(f.stDeviation);
   add('st', 'ST deviation', f.stDeviation, 'mV', band(st, BANDS.st), '< 0.05',
     st >= 0.1 ? 'At or above 0.10 mV (possible ischemia)' : 'Borderline ST deviation');

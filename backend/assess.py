@@ -45,7 +45,7 @@ def metrics_for(ecg, vitals) -> list[dict]:
                        "60-100", "Outside 60-100 bpm" if hr >= 50 and hr <= 120 else "Heart rate dangerously low/high"))
     rhythm_status = {"Sinus rhythm": "green", "Tachycardia": "yellow", "Bradycardia": "yellow"}.get(ecg.rhythm, "red")
     out.append(_metric("rhythm", "Rhythm", ecg.rhythm, "", rhythm_status, "Sinus rhythm",
-                       f"Rhythm: {ecg.rhythm}"))
+                       ecg.rhythm))
     st = abs(ecg.stDeviation)
     out.append(_metric("st", "ST deviation", ecg.stDeviation, "mV", _band(st, (0, 0.04), (0, 0.09)),
                        "< 0.05", "At or above 0.10 mV (possible ischemia)" if st >= 0.10 else "Borderline ST deviation"))

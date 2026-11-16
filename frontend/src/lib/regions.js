@@ -10,7 +10,7 @@ export function abnormalRegions(signal, features) {
       if (end < signal.filtered.length) out.push({ start, end, status, label: i === 0 ? `ST ${features.stDeviation > 0 ? '↑' : '↓'}` : null });
     });
   }
-  if (features.rhythm === 'Irregularly irregular') {
+  if (features.rhythm === 'Irregular') {
     const rr = peaks.slice(1).map((p, i) => p - peaks[i]);
     const med = [...rr].sort((a, b) => a - b)[Math.floor(rr.length / 2)];
     let labelled = false;
