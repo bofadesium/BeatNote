@@ -33,6 +33,23 @@ export async function sendAlert(caseId, level, reasons) {
   return post('/alerts', { case_id: caseId, level, reasons });
 }
 
+export async function scoreBatch(file) {
+  if (!hasBackend) throw new Error('Uploads need the API running (set EXPO_PUBLIC_API_URL).');
+  const form = new FormData();
+  form.append('file', file, file.name);
+  let res;
+  try {
+    res = await fetch(`${API}/batch`, { method: 'POST', body: form });
+  } catch {
+    throw new Error(`Can't reach the backend at ${API}. Is it running?`);
+  }
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body && body.detail ? body.detail : `Backend error ${res.status}`);
+  }
+  return res.json();
+}
+
 export async function generateNote(payload) {
   if (hasBackend) return post('/note', payload); // { note, source }
   await new Promise((r) => setTimeout(r, 900));
@@ -44,10 +61,10 @@ function mockNote({ patient, features: f, risk, flags }) {
     Moderate: 'Prompt clinician review; serial ECGs and troponin. Monitor on telemetry.',
     Low: 'Routine evaluation; reassess if symptoms change.' }[risk.level];
   return [
-    `S: ${patient.age}y ${patient.sex} presenting via ${patient.arrival.toLowerCase()}${patient.chestPain ? ' with chest pain' : ''}.`,
-    `O: HR ${f.hr} bpm, ${f.rhythm.toLowerCase()}. RMSSD ${f.rmssd} ms. ST deviation ${f.stDeviation} mV. QT ${f.qtMs} ms.`,
-    `A: ED admission-risk score ${risk.score}/100; overall triage status ${risk.level}.${flags.length ? ` Flagged for clinician: ${flags.join('; ')}.` : ''}`,
-    `P: ${action}`,
+    `Subjective: ${patient.age}y ${patient.sex} presenting via ${patient.arrival.toLowerCase()}${patient.chestPain ? ' with chest pain' : ''}.`,
+    `Objective: HR ${f.hr} bpm, ${f.rhythm.toLowerCase()}. RMSSD ${f.rmssd} ms. ST deviation ${f.stDeviation} mV. QT ${f.qtMs} ms.`,
+    `Assessment: ED admission-risk score ${risk.score}/100; overall triage status ${risk.level}.${flags.length ? ` Flagged for clinician: ${flags.join('; ')}.` : ''}`,
+    `Plan: ${action}`,
     '',
     'Draft generated for clinician review (demo, not a medical device).',
   ].join('\n');

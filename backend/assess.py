@@ -14,6 +14,14 @@ import pandas as pd
 THRESHOLD_VERSION = "demo-0.1"
 RANK = {"green": 0, "yellow": 1, "red": 2}
 
+# Columns the admission model is trained on and scored with (order as saved in the bundle).
+MODEL_COLUMNS = [
+    "esi", "age", "gender", "arrivalmode",
+    "n_edvisits", "n_admissions", "n_surgeries",
+    "triage_vital_hr", "triage_vital_sbp", "triage_vital_dbp", "triage_vital_rr",
+    "triage_vital_o2", "triage_vital_o2_device", "triage_vital_temp",
+]
+
 # Admission probability: base rate in the Yale data is 0.297.
 ADMIT_YELLOW, ADMIT_RED = 0.30, 0.60
 
@@ -45,7 +53,7 @@ def metrics_for(ecg, vitals) -> list[dict]:
                        "60-100", "Outside 60-100 bpm" if hr >= 50 and hr <= 120 else "Heart rate dangerously low/high"))
     rhythm_status = {"Sinus rhythm": "green", "Tachycardia": "yellow", "Bradycardia": "yellow"}.get(ecg.rhythm, "red")
     out.append(_metric("rhythm", "Rhythm", ecg.rhythm, "", rhythm_status, "Sinus rhythm",
-                       f"Rhythm: {ecg.rhythm}"))
+                       ecg.rhythm))
     st = abs(ecg.stDeviation)
     out.append(_metric("st", "ST deviation", ecg.stDeviation, "mV", _band(st, (0, 0.04), (0, 0.09)),
                        "< 0.05", "At or above 0.10 mV (possible ischemia)" if st >= 0.10 else "Borderline ST deviation"))
@@ -118,6 +126,17 @@ def admission_probability(patient, triage, vitals, ecg) -> Optional[float]:
     for c in ("gender", "arrivalmode"):
         df[c] = df[c].astype("category")
     return float(bundle["model"].predict_proba(df)[0, 1])
+
+
+def score_frame(df: pd.DataFrame) -> Optional[list[float]]:
+    """P(admitted) for every row of an already-mapped frame; None if no model is loaded."""
+    bundle = load_model()
+    if bundle is None:
+        return None
+    X = df[bundle["columns"]].copy()
+    for c in ("gender", "arrivalmode"):
+        X[c] = X[c].astype("category")
+    return bundle["model"].predict_proba(X)[:, 1].tolist()
 
 
 def admission_status(p: float) -> str:

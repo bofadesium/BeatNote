@@ -60,6 +60,6 @@ export function extractFeatures({ peaks, fs }, { st, qt }) {
     rmssd: Math.round(rmssd),
     stDeviation: Number(st.toFixed(2)),
     qtMs: Math.round(qt * 1000),
-    rhythm: rmssd > 90 ? 'Irregularly irregular' : mean < 600 ? 'Tachycardia' : mean > 1000 ? 'Bradycardia' : 'Sinus rhythm',
+    rhythm: rmssd > 90 ? 'Irregular' : mean < 600 ? 'Tachycardia' : mean > 1000 ? 'Bradycardia' : 'Sinus rhythm',
   };
 }

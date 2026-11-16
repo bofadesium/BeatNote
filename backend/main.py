@@ -10,7 +10,8 @@ from typing import Literal
 import httpx
 import alerts
 import assess as assess_mod
-from fastapi import FastAPI, HTTPException
+import batch as batch_mod
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -98,11 +99,11 @@ def template_note(r: NoteRequest) -> str:
     p, f, k = r.patient, r.features, r.risk
     cp = " with chest pain" if p.chestPain else ""
     return "\n".join([
-        f"S: {p.age}y {p.sex} presenting via {p.arrival.lower()}{cp}.",
-        f"O: HR {f.hr} bpm, {f.rhythm.lower()}. RMSSD {f.rmssd} ms. ST deviation {f.stDeviation} mV. QT {f.qtMs} ms.",
-        f"A: ED admission-risk score {k.score}/100; overall triage status {k.level}."
+        f"Subjective: {p.age}y {p.sex} presenting via {p.arrival.lower()}{cp}.",
+        f"Objective: HR {f.hr} bpm, {f.rhythm.lower()}. RMSSD {f.rmssd} ms. ST deviation {f.stDeviation} mV. QT {f.qtMs} ms.",
+        f"Assessment: ED admission-risk score {k.score}/100; overall triage status {k.level}."
         + (f" Flagged for clinician: {'; '.join(r.flags)}." if r.flags else ""),
-        f"P: {ACTIONS[k.level]}",
+        f"Plan: {ACTIONS[k.level]}",
         "",
         DISCLAIMER,
     ])
@@ -110,7 +111,8 @@ def template_note(r: NoteRequest) -> str:
 
 SYSTEM_PROMPT = (
     "You are a clinical documentation assistant in an emergency department. "
-    "Write a concise SOAP-format triage note (S, O, A, P, each one or two lines) using ONLY the data given. "
+    "Write a concise triage note with four sections whose headings are spelled out in full — "
+    "'Subjective:', 'Objective:', 'Assessment:', 'Plan:' — each one or two lines, using ONLY the data given. "
     "Do not invent findings, history or diagnoses beyond what the data supports. "
     f"End with the line: {DISCLAIMER}"
 )
@@ -159,6 +161,25 @@ async def create_note(req: NoteRequest):
 def assess_case(req: AssessRequest):
     """Traffic-light statuses for every measurement + Yale admission risk + notification level."""
     return assess_mod.assess(req.patient, req.triage, req.vitals, req.ecg)
+
+
+MAX_UPLOAD_BYTES = 25 * 1024 * 1024
+
+
+@app.post("/batch")
+async def score_batch(file: UploadFile = File(...)):
+    """Scores every row of an uploaded CSV or parquet cohort with the admission model."""
+    raw = await file.read()
+    if not raw:
+        raise HTTPException(400, "The uploaded file is empty.")
+    if len(raw) > MAX_UPLOAD_BYTES:
+        raise HTTPException(413, "File too large: upload 25 MB or less.")
+    try:
+        return batch_mod.score_file(file.filename, raw)
+    except batch_mod.BadFile as e:
+        raise HTTPException(400, str(e))
+    except batch_mod.ModelMissing as e:
+        raise HTTPException(503, str(e))
 
 
 @app.post("/alerts")

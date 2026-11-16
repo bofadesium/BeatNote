@@ -2,6 +2,13 @@ import React from 'react';
 import { Text, View, StyleSheet } from 'react-native';
 import StatusPill from './StatusPill';
 import { STATUS } from '../theme';
+import { BANDS, bandText } from '../lib/thresholds';
+
+// Caution limit for a row: the wider band that still counts as yellow.
+const cautionLimit = (key) => {
+  const b = BANDS[key === 'adm' ? 'admission' : key];
+  return b ? bandText(b, 'caution') : null;
+};
 
 export default function MetricsTable({ metrics, admission }) {
   const rows = [];
@@ -16,7 +23,7 @@ export default function MetricsTable({ metrics, admission }) {
         <View key={r.key} style={[styles.row, r.status !== 'green' && { backgroundColor: STATUS[r.status].bg }]}>
           <View style={{ flex: 1 }}>
             <Text style={styles.label}>{r.label}</Text>
-            <Text style={styles.normal}>normal: {r.normal}</Text>
+            <Text style={styles.normal}>normal: {r.normal}{cautionLimit(r.key) ? ` · caution ${cautionLimit(r.key)}` : ''}</Text>
             {r.reason && <Text style={[styles.reason, { color: STATUS[r.status].fg }]}>{r.reason}</Text>}
           </View>
           <View style={styles.right}>

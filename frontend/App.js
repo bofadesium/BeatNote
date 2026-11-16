@@ -5,7 +5,9 @@ import * as Clipboard from 'expo-clipboard';
 import EcgChart from './src/components/EcgChart';
 import AlertBanner from './src/components/AlertBanner';
 import MetricsTable from './src/components/MetricsTable';
+import StatusLegend from './src/components/StatusLegend';
 import ImpactCard from './src/components/ImpactCard';
+import ImportPanel from './src/components/ImportPanel';
 import { CASES } from './src/lib/cases';
 import { fuseRisk } from './src/lib/triage';
 import { abnormalRegions } from './src/lib/regions';
@@ -95,9 +97,10 @@ export default function App() {
               <View style={[styles.overall, { backgroundColor: overall.bg, borderColor: overall.border }]}>
                 <Text style={[styles.overallText, { color: overall.fg }]}>{overall.icon} Overall: {overall.word}</Text>
               </View>
+              <StatusLegend />
               <MetricsTable metrics={a.metrics} admission={a.admission} />
               {!a.admission && <Text style={styles.legend}>Admission-risk model not available (backend offline or model file missing).</Text>}
-              <Text style={styles.legend}>Green = normal · Yellow = caution · Red = critical. Thresholds {a.thresholds_version}: demo values, not clinically validated.</Text>
+              <Text style={styles.legend}>Thresholds {a.thresholds_version}: demo values, not clinically validated.</Text>
             </View>
 
             <Text style={styles.label}>4 · Triage note</Text>
@@ -114,6 +117,9 @@ export default function App() {
                 </Pressable>
               </View>
             )}
+
+            <Text style={styles.label}>5 · Import a cohort (CSV / parquet)</Text>
+            <ImportPanel />
           </>
         )}
         <ImpactCard />
