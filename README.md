@@ -29,8 +29,34 @@ Emergency departments are overwhelmed. ECG interpretation and documentation dela
 4. **Click “Generate Note”** → Nemotron drafts a triage impression and recommended action.  
 5. **Copy** the auto-drafted note to the EHR (simulated).
 
-**Live Demo:** [Insert hosted Streamlit / Render / HF Spaces URL here]  
+**Live Demo:** deploy with the steps under [Hosted live demo](#-hosted-live-demo) (one public URL, no local setup for viewers)  
 **Backup Video:** [Insert link if Wi-Fi fails]
+
+## 🌍 Hosted live demo
+
+`deploy/Dockerfile` builds one container that serves the Expo web app and the FastAPI backend on the
+same origin (app at `/`, API at `/api`), so there is no CORS or API-URL configuration to do.
+
+```bash
+docker build -f deploy/Dockerfile -t beatnote-demo .
+docker run -p 3000:7860 beatnote-demo   # http://localhost:3000
+```
+
+**Render (free, one click):** push this repo, then in Render choose **New → Blueprint** and point it at
+the repository — `render.yaml` provisions a Docker web service with `/api/health` as the health check.
+Set `NVIDIA_API_KEY` in the service's environment to get real Nemotron notes; without it the API returns
+the built-in template note.
+
+**Hugging Face Spaces (free, public, web app only):** live at
+`https://bofadesium-beatnote.static.hf.space`. Add a repository secret `HF_TOKEN` (a *write* token from
+<https://huggingface.co/settings/tokens>), then run the **Deploy to Hugging Face Spaces** workflow (or push
+to `main`): it exports the web app and uploads it as the static Space `<your-hf-username>/beatnote` (set a
+repository variable `HF_SPACE` to choose another name). A static Space runs no server, so scoring and the
+note draft happen in the browser — the backend features (Yale admission model, Nemotron notes, alert log)
+need the Render deploy below. Docker Spaces are not free: Hugging Face now requires a paid plan for them.
+
+Notes: the container listens on `$PORT` (default 7860). Free hosting has an ephemeral disk, so the SQLite
+alert log resets on redeploy, and Render's free instance sleeps after inactivity (~50 s cold start).
 
 ## 🧱 Architecture & Stack
 
