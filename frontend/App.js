@@ -96,7 +96,7 @@ export default function App() {
               <View style={[styles.overall, { backgroundColor: overall.bg, borderColor: overall.border }]}>
                 <Text style={[styles.overallText, { color: overall.fg }]}>{overall.icon} Overall: {overall.word}</Text>
               </View>
-              <StatusLegend />
+              <StatusLegend metrics={a.metrics} showAdmission={!!a.admission} />
               <MetricsTable metrics={a.metrics} admission={a.admission} />
               {!a.admission && <Text style={styles.legend}>Admission-risk model not available (backend offline or model file missing).</Text>}
               <Text style={styles.legend}>Thresholds {a.thresholds_version}: demo values, not clinically validated.</Text>
