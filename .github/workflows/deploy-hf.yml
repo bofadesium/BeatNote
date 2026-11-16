@@ -1,8 +1,9 @@
 name: Deploy to Hugging Face Spaces
 
-# Builds a Docker Space from this repository on every push to main.
-# Setup: add a repository secret HF_TOKEN (write token from https://huggingface.co/settings/tokens).
+# Publishes the static web build as a free Hugging Face Space on every push to main.
+# Setup: add a repository secret HF_TOKEN (a WRITE token from https://huggingface.co/settings/tokens).
 # The Space is created as <your-hf-username>/beatnote, or set a repository variable HF_SPACE to override.
+# Note: Docker Spaces (deploy/Dockerfile) require a paid HF plan; static Spaces are free.
 
 on:
   push:
@@ -15,14 +16,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # The Space needs the Dockerfile and a Space card (README with sdk: docker) at its root,
-      # so stage the build context exactly that way instead of reshaping the repository.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build web export
+        working-directory: frontend
+        env:
+          EXPO_NO_DOTENV: 1
+          CI: 1
+        run: |
+          npm ci --no-audit --no-fund
+          # No EXPO_PUBLIC_API_URL: the Space has no backend, so the app uses its local rules + note.
+          npx expo export --platform web --output-dir dist
+
+      # A Space needs its card (README with sdk: static) next to the built files.
       - name: Stage Space files
         run: |
-          mkdir -p /tmp/space
-          cp -r backend frontend deploy /tmp/space/
-          cp deploy/Dockerfile /tmp/space/Dockerfile
-          cp deploy/huggingface/README.md /tmp/space/README.md
+          mkdir -p /tmp/site
+          cp -r frontend/dist/. /tmp/site/
+          cp deploy/huggingface/README.md /tmp/site/README.md
 
       - name: Upload to Hugging Face
         env:
@@ -36,9 +49,9 @@ jobs:
 
           api = HfApi(token=os.environ["HF_TOKEN"])
           repo = os.environ.get("HF_SPACE") or f'{api.whoami()["name"]}/beatnote'
-          api.create_repo(repo_id=repo, repo_type="space", space_sdk="docker", exist_ok=True)
+          api.create_repo(repo_id=repo, repo_type="space", space_sdk="static", exist_ok=True)
           api.upload_folder(
-              folder_path="/tmp/space",
+              folder_path="/tmp/site",
               repo_id=repo,
               repo_type="space",
               commit_message="Deploy BeatNote demo",
