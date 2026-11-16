@@ -44,10 +44,10 @@ function mockNote({ patient, features: f, risk, flags }) {
     Moderate: 'Prompt clinician review; serial ECGs and troponin. Monitor on telemetry.',
     Low: 'Routine evaluation; reassess if symptoms change.' }[risk.level];
   return [
-    `S: ${patient.age}y ${patient.sex} presenting via ${patient.arrival.toLowerCase()}${patient.chestPain ? ' with chest pain' : ''}.`,
-    `O: HR ${f.hr} bpm, ${f.rhythm.toLowerCase()}. RMSSD ${f.rmssd} ms. ST deviation ${f.stDeviation} mV. QT ${f.qtMs} ms.`,
-    `A: ED admission-risk score ${risk.score}/100; overall triage status ${risk.level}.${flags.length ? ` Flagged for clinician: ${flags.join('; ')}.` : ''}`,
-    `P: ${action}`,
+    `Subjective: ${patient.age}y ${patient.sex} presenting via ${patient.arrival.toLowerCase()}${patient.chestPain ? ' with chest pain' : ''}.`,
+    `Objective: HR ${f.hr} bpm, ${f.rhythm.toLowerCase()}. RMSSD ${f.rmssd} ms. ST deviation ${f.stDeviation} mV. QT ${f.qtMs} ms.`,
+    `Assessment: ED admission-risk score ${risk.score}/100; overall triage status ${risk.level}.${flags.length ? ` Flagged for clinician: ${flags.join('; ')}.` : ''}`,
+    `Plan: ${action}`,
     '',
     'Draft generated for clinician review (demo, not a medical device).',
   ].join('\n');

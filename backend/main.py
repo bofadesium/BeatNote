@@ -98,11 +98,11 @@ def template_note(r: NoteRequest) -> str:
     p, f, k = r.patient, r.features, r.risk
     cp = " with chest pain" if p.chestPain else ""
     return "\n".join([
-        f"S: {p.age}y {p.sex} presenting via {p.arrival.lower()}{cp}.",
-        f"O: HR {f.hr} bpm, {f.rhythm.lower()}. RMSSD {f.rmssd} ms. ST deviation {f.stDeviation} mV. QT {f.qtMs} ms.",
-        f"A: ED admission-risk score {k.score}/100; overall triage status {k.level}."
+        f"Subjective: {p.age}y {p.sex} presenting via {p.arrival.lower()}{cp}.",
+        f"Objective: HR {f.hr} bpm, {f.rhythm.lower()}. RMSSD {f.rmssd} ms. ST deviation {f.stDeviation} mV. QT {f.qtMs} ms.",
+        f"Assessment: ED admission-risk score {k.score}/100; overall triage status {k.level}."
         + (f" Flagged for clinician: {'; '.join(r.flags)}." if r.flags else ""),
-        f"P: {ACTIONS[k.level]}",
+        f"Plan: {ACTIONS[k.level]}",
         "",
         DISCLAIMER,
     ])
@@ -110,7 +110,8 @@ def template_note(r: NoteRequest) -> str:
 
 SYSTEM_PROMPT = (
     "You are a clinical documentation assistant in an emergency department. "
-    "Write a concise SOAP-format triage note (S, O, A, P, each one or two lines) using ONLY the data given. "
+    "Write a concise triage note with four sections whose headings are spelled out in full — "
+    "'Subjective:', 'Objective:', 'Assessment:', 'Plan:' — each one or two lines, using ONLY the data given. "
     "Do not invent findings, history or diagnoses beyond what the data supports. "
     f"End with the line: {DISCLAIMER}"
 )
