@@ -1,0 +1,47 @@
+name: Deploy to Hugging Face Spaces
+
+# Builds a Docker Space from this repository on every push to main.
+# Setup: add a repository secret HF_TOKEN (write token from https://huggingface.co/settings/tokens).
+# The Space is created as <your-hf-username>/beatnote, or set a repository variable HF_SPACE to override.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The Space needs the Dockerfile and a Space card (README with sdk: docker) at its root,
+      # so stage the build context exactly that way instead of reshaping the repository.
+      - name: Stage Space files
+        run: |
+          mkdir -p /tmp/space
+          cp -r backend frontend deploy /tmp/space/
+          cp deploy/Dockerfile /tmp/space/Dockerfile
+          cp deploy/huggingface/README.md /tmp/space/README.md
+
+      - name: Upload to Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE: ${{ vars.HF_SPACE }}
+        run: |
+          pip install -q -U huggingface_hub
+          python - <<'PY'
+          import os
+          from huggingface_hub import HfApi
+
+          api = HfApi(token=os.environ["HF_TOKEN"])
+          repo = os.environ.get("HF_SPACE") or f'{api.whoami()["name"]}/beatnote'
+          api.create_repo(repo_id=repo, repo_type="space", space_sdk="docker", exist_ok=True)
+          api.upload_folder(
+              folder_path="/tmp/space",
+              repo_id=repo,
+              repo_type="space",
+              commit_message="Deploy BeatNote demo",
+          )
+          print(f"Deployed: https://huggingface.co/spaces/{repo}")
+          PY

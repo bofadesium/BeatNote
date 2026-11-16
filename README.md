@@ -39,7 +39,7 @@ same origin (app at `/`, API at `/api`), so there is no CORS or API-URL configur
 
 ```bash
 docker build -f deploy/Dockerfile -t beatnote-demo .
-docker run -p 3000:8000 beatnote-demo   # http://localhost:3000
+docker run -p 3000:7860 beatnote-demo   # http://localhost:3000
 ```
 
 **Render (free, one click):** push this repo, then in Render choose **New → Blueprint** and point it at
@@ -47,8 +47,15 @@ the repository — `render.yaml` provisions a Docker web service with `/api/heal
 Set `NVIDIA_API_KEY` in the service's environment to get real Nemotron notes; without it the API returns
 the built-in template note.
 
-Notes: the container listens on `$PORT` (default 8000). Render's free plan has an ephemeral disk, so the
-SQLite alert log resets on redeploy, and the instance sleeps after inactivity (~50 s cold start).
+**Hugging Face Spaces (free, public):** add a repository secret `HF_TOKEN` (a *write* token from
+<https://huggingface.co/settings/tokens>), then run the **Deploy to Hugging Face Spaces** workflow (or push
+to `main`). It creates the Docker Space `<your-hf-username>/beatnote` — or set a repository variable
+`HF_SPACE` to choose the name — and the demo goes live at
+`https://huggingface.co/spaces/<owner>/beatnote`. `deploy/huggingface/README.md` is the Space card
+(Hugging Face reads the SDK and port from it).
+
+Notes: the container listens on `$PORT` (default 7860). Free hosting has an ephemeral disk, so the SQLite
+alert log resets on redeploy, and Render's free instance sleeps after inactivity (~50 s cold start).
 
 ## 🧱 Architecture & Stack
 

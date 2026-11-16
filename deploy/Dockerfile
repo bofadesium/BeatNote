@@ -25,5 +25,7 @@ COPY backend/ ./backend/
 COPY deploy/server.py ./deploy/server.py
 COPY --from=web /build/dist ./web
 ENV BEATNOTE_DB=/data/beatnote.db
-EXPOSE 8000
+# Hugging Face Spaces serve on 7860; Render overrides this with its own PORT.
+ENV PORT=7860
+EXPOSE 7860
 CMD ["sh", "-c", "exec uvicorn deploy.server:app --app-dir /app --host 0.0.0.0 --port ${PORT:-8000}"]
